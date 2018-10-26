@@ -4,13 +4,15 @@ using Microsoft.WindowsAzure.Storage.Table;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Web.Http;
+using TestAPISharding.Models;
 
 namespace TestAPISharding.Controllers
 {
     public class ShardingController : ApiController
     {
-        public string Post(String id)
+        public HttpResponseMessage Post(String id)
         {
             try
             {
@@ -18,12 +20,16 @@ namespace TestAPISharding.Controllers
                 String rfc = $"{ObtenerLetraInicial(rnd.Next(1, 26))}ACX880101{id}";
 
                 OperacionesStorage operacionesStorage = OperacionesStorage.ObtenerInstancia(rfc);
-                return operacionesStorage.InsertarEntidad<ParametrosEstudio>(new ParametrosEstudio()
+
+                var timezone = TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time (Mexico)");
+                var fechaActual = TimeZoneInfo.ConvertTime(DateTime.UtcNow, timezone);
+
+                operacionesStorage.InsertarEntidad<ParametrosEstudio>(new ParametrosEstudio()
                 {
                     EjecucionAlgoritmo = false,
                     Encuesta = "1",
                     Estudio = "1",
-                    Grupo = "B1",
+                    Grupo = "P",
                     IdDeclaracion = id.ToString(),
                     Inicializada = false,
                     LogueoInicialEgresos = false,
@@ -33,10 +39,28 @@ namespace TestAPISharding.Controllers
                     Periodo = "009",
                     RowKey = id.ToString()
                 });
+
+                for (int i = 1; i <= 15; i++)
+                {
+                    operacionesStorage.InsertarEntidad<Navegacion>(new Navegacion
+                    {
+                        Id = 1,
+                        Evento = "PruebaCarga",
+                        RFC = rfc,
+                        IdDeclaracion = id.ToString(),
+                        Periodo = "009",
+                        HoraFecha = fechaActual,
+                        PartitionKey = rfc,
+                        RowKey = Guid.NewGuid().ToString()
+                    });
+                }
+
+                return Request.CreateResponse(System.Net.HttpStatusCode.OK, rfc);
             }
             catch (Exception ex)
             {
-                return $"Mensaje{ex.Message}-stack{ex.StackTrace}";
+                string mensajeError = $"Mensaje{ex.Message}-stack{ex.StackTrace}";
+                return Request.CreateResponse(System.Net.HttpStatusCode.InternalServerError, mensajeError);
             }
         }
 
@@ -46,59 +70,82 @@ namespace TestAPISharding.Controllers
             {
                 case 1:
                     return "A";
+
                 case 2:
                     return "B";
+
                 case 3:
                     return "C";
+
                 case 4:
                     return "D";
+
                 case 5:
                     return "E";
+
                 case 6:
                     return "F";
+
                 case 7:
                     return "G";
+
                 case 8:
                     return "H";
+
                 case 9:
                     return "I";
+
                 case 10:
                     return "J";
+
                 case 11:
                     return "K";
+
                 case 12:
                     return "L";
+
                 case 13:
                     return "M";
+
                 case 14:
                     return "N";
+
                 case 15:
                     return "O";
+
                 case 16:
                     return "P";
+
                 case 17:
                     return "Q";
+
                 case 18:
                     return "R";
+
                 case 19:
                     return "S";
+
                 case 20:
                     return "T";
+
                 case 21:
                     return "U";
+
                 case 22:
                     return "V";
+
                 case 23:
                     return "W";
+
                 case 24:
                     return "X";
+
                 case 25:
                     return "Y";
             }
 
             return "Z";
         }
-
     }
 
     public class Balanceador
