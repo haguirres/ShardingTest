@@ -20,6 +20,7 @@ namespace TestAPISharding.Controllers
                 String rfc = $"{ObtenerLetraInicial(rnd.Next(1, 26))}ACX880101{id}";
 
                 OperacionesStorage operacionesStorage = OperacionesStorage.ObtenerInstancia(rfc);
+                int numeroEventos = int.Parse(CloudConfigurationManager.GetSetting("NumeroEventos"));
 
                 var timezone = TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time (Mexico)");
                 var fechaActual = TimeZoneInfo.ConvertTime(DateTime.UtcNow, timezone);
@@ -40,7 +41,7 @@ namespace TestAPISharding.Controllers
                     RowKey = id.ToString()
                 });
 
-                for (int i = 1; i <= 15; i++)
+                for (int i = 1; i <= numeroEventos; i++)
                 {
                     operacionesStorage.InsertarEntidad<Navegacion>(new Navegacion
                     {
